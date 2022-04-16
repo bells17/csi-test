@@ -28,7 +28,7 @@ import (
 )
 
 // Connect address by grpc
-func Connect(address string, dialOptions ...grpc.DialOption) (*grpc.ClientConn, error) {
+func Connect(ctx context.Context, address string, dialOptions ...grpc.DialOption) (*grpc.ClientConn, error) {
 	u, err := url.Parse(address)
 	if err == nil && (!u.IsAbs() || u.Scheme == "unix") {
 		dialOptions = append(dialOptions,
@@ -38,15 +38,15 @@ func Connect(address string, dialOptions ...grpc.DialOption) (*grpc.ClientConn, 
 				}))
 	}
 
-	conn, err := grpc.Dial(address, dialOptions...)
+	conn, err := grpc.DialContext(ctx, address, dialOptions...)
 	if err != nil {
 		return nil, err
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
+	c, cancel := context.WithTimeout(context.Background(), time.Minute)
 	defer cancel()
 	for {
-		if !conn.WaitForStateChange(ctx, conn.GetState()) {
+		if !conn.WaitForStateChange(c, conn.GetState()) {
 			return conn, fmt.Errorf("Connection timed out")
 		}
 		if conn.GetState() == connectivity.Ready {

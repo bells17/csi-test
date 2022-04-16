@@ -17,6 +17,7 @@ limitations under the License.
 package driver
 
 import (
+	"context"
 	"net"
 
 	"github.com/kubernetes-csi/csi-test/v4/utils"
@@ -75,7 +76,7 @@ func (m *MockCSIDriver) Nexus() (*grpc.ClientConn, error) {
 	}
 
 	// Create a client connection
-	m.conn, err = utils.Connect(m.Address(), grpc.WithInsecure())
+	m.conn, err = utils.Connect(context.Background(), m.Address(), grpc.WithInsecure())
 	if err != nil {
 		return nil, err
 	}

@@ -71,6 +71,10 @@ type TestConfig struct {
 	// is empty, it must provide both the controller and node service.
 	Address string
 
+	// DialOptions is the context for grpc.DialContext().
+	// The default is context.Background().
+	DialContext context.Context
+
 	// DialOptions specifies the options that are to be used
 	// when connecting to Address. The default is grpc.WithInsecure().
 	// A dialer will be added for Unix Domain Sockets.
@@ -205,6 +209,7 @@ func NewTestConfig() TestConfig {
 		IdempotentCount:      10,
 		CheckPathCmdTimeout:  10 * time.Second,
 
+		DialContext:           context.Background(),
 		DialOptions:           []grpc.DialOption{grpc.WithInsecure()},
 		ControllerDialOptions: []grpc.DialOption{grpc.WithInsecure()},
 	}
@@ -272,7 +277,7 @@ func (sc *TestContext) Setup() {
 			sc.Conn.Close()
 		}
 		By("connecting to CSI driver")
-		sc.Conn, err = utils.Connect(sc.Config.Address, sc.Config.DialOptions...)
+		sc.Conn, err = utils.Connect(sc.Config.DialContext, sc.Config.Address, sc.Config.DialOptions...)
 		Expect(err).NotTo(HaveOccurred())
 		sc.connAddress = sc.Config.Address
 	} else {
@@ -285,7 +290,7 @@ func (sc *TestContext) Setup() {
 			sc.ControllerConn = sc.Conn
 			sc.controllerConnAddress = sc.Config.Address
 		} else {
-			sc.ControllerConn, err = utils.Connect(sc.Config.ControllerAddress, sc.Config.ControllerDialOptions...)
+			sc.ControllerConn, err = utils.Connect(sc.Config.DialContext, sc.Config.ControllerAddress, sc.Config.ControllerDialOptions...)
 			Expect(err).NotTo(HaveOccurred())
 			sc.controllerConnAddress = sc.Config.ControllerAddress
 		}
